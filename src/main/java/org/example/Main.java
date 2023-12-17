@@ -25,6 +25,8 @@ public class Main {
     }
 
     public void getBooks(){
+        books.clear();
+        stk.findBook(buff, books);
         for(Book book : books){
            stk.getBookDetails(book);
             System.out.println();
@@ -44,12 +46,8 @@ public class Main {
                 case 1: obj.stk.addBook(obj.buff); break;
                 case 2: obj.stk.updateBook(obj.buff); break;
                 case 3: obj.stk.removeBook(obj.buff); break;
-                case 4:
-                    if(obj.books.size() > 0){
-                        obj.books.clear();
-                    }
-                    obj.books =  obj.stk.findBook(obj.buff);
-                        obj.getBooks(); break;
+                case 4: obj.getBooks(); break;
+
             }
         }catch(IOException e){
          e.printStackTrace();

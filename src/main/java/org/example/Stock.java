@@ -7,6 +7,6 @@ public interface Stock {
     public void addBook(BufferedReader buff);
     public void updateBook(BufferedReader buff);
     public void removeBook(BufferedReader buff);
-    public ArrayList<Book> findBook(BufferedReader buff);
+    public void findBook(BufferedReader buff, ArrayList<Book> books);
     public void getBookDetails(Book book);
 }
