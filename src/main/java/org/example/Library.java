@@ -94,11 +94,14 @@ public class Library implements Stock {
             for (int i = 0; i < bookCategories.size(); i++) {
                 System.out.println(i + 1 + ". " + bookCategories.get(i));
             }
+            int categoryNumber = 0;
             do {
                 line = buff.readLine();
-            } while (line.length() == 0 || ((isAdd == true && Integer.parseInt(line) <= 0 && Integer.parseInt(line) > 7) ||
-                    (isAdd == false && Integer.parseInt(line) < 0 && Integer.parseInt(line) > 7 )));
-            book.setCategory(bookCategories.get(Integer.parseInt(line)));
+                categoryNumber = Integer.parseInt(line);
+            } while (line.length() == 0 || ((isAdd == true && categoryNumber <= 0 && categoryNumber > 7) ||
+                    (isAdd == false && categoryNumber < 0 && categoryNumber > 7 )));
+            if(categoryNumber > 0)
+             book.setCategory(bookCategories.get(categoryNumber - 1));
             book.setCode(generateCode(Integer.parseInt(line)));
             line = "";
 
@@ -110,7 +113,7 @@ public class Library implements Stock {
 
     public void addBook(BufferedReader buff) {
         try {
-            System.out.println("Enter the details of book/books, you want to find:- ");
+            System.out.println("Enter the details of book/books, you want to add:- ");
             Book book = bookDialog(buff, true);
             PreparedStatement pStmt = con.prepareStatement("insert into books values(?,?,?,?,?,?)");
             pStmt.setString(1, book.getCode());
@@ -129,55 +132,194 @@ public class Library implements Stock {
     }
 
     public void updateBook(BufferedReader buff) {
+        System.out.println("Enter the details of book/books, you want to update:- ");
+        Book book1 = bookDialog(buff, false);
+        System.out.println("Enter the new details of the updated book/books :- ");
+        Book book2 = bookDialog(buff, false);
+        try{
+            String sql ="UPDATE books " +
+                    "SET " +
+                    "    name = " +
+                    "        CASE " +
+                    "            WHEN ? is null THEN name " +
+                    "            ELSE ? " +
+                    "        END, " +
+                    "    author = " +
+                    "        CASE " +
+                    "            WHEN ? is null THEN author " +
+                    "            ELSE ? "  +
+                    "        END, " +
+                    "    cost = " +
+                    "        CASE " +
+                    "            WHEN ? != 0 THEN ? " +
+                    "            ELSE cost " +
+                    "        END, " +
+                    " edition = " +
+                    "        CASE " +
+                    "            WHEN ? != 0 THEN ? " +
+                    "            ELSE edition " +
+                    "        END, " +
+                    " category = " +
+                    "        CASE " +
+                    "            WHEN ? != 0 THEN ? " +
+                    "            ELSE category " +
+                    "        END        " +
+                    "where " +
+                    "(? = 0 or category = ?) and " +
+                    "(? is null or name = ?) and " +
+                    "(? is null or author = ? ) and " +
+                    "(? = 0 or cost = ?) and " +
+                    "(? = 0 or edition = ?)";
+
+            PreparedStatement pStmt = con.prepareStatement(sql);
+            pStmt.setString(1, book2.getName());
+            pStmt.setString(2, book2.getName());
+            pStmt.setString(3, book2.getAuthor());
+            pStmt.setString(4, book2.getAuthor());
+            pStmt.setFloat(5, book2.getCost());
+            pStmt.setFloat(6, book2.getCost());
+            pStmt.setInt(7, book2.getEdition());
+            pStmt.setInt(8, book2.getEdition());
+            pStmt.setInt(9, getCategoryNumber(book2.getCode()));
+            pStmt.setInt(10, getCategoryNumber(book2.getCode()));
+            pStmt.setInt(11, getCategoryNumber(book1.getCode()));
+            pStmt.setInt(12, getCategoryNumber(book1.getCode()));
+            pStmt.setString(13, book1.getName());
+            pStmt.setString(14, book1.getName());
+            pStmt.setString(15, book1.getAuthor());
+            pStmt.setString(16, book1.getAuthor());
+            pStmt.setFloat(17, book1.getCost());
+            pStmt.setFloat(18, book1.getCost());
+            pStmt.setInt(19, book1.getEdition());
+            pStmt.setInt(20, book1.getEdition());
+            System.out.println("Rows Affected " + pStmt.executeUpdate());
+        }
+        catch(SQLException s){
+            s.printStackTrace();
+        }
+
 
     }
 
     public void removeBook(BufferedReader buff) {
+        System.out.println("Enter the details of book/books, you want to remove:- ");
+        Book book = bookDialog(buff, false);
+        ResultSet rst;
+        try{
+
+            String sql ="Delete from books " +
+                    "where " +
+                    "(? = 0 or category = ?) and " +
+                    "(? is null or name = ?) and " +
+                    "(? is null or author = ? ) and " +
+                    "(? = 0 or cost = ?) and " +
+                    "(? = 0 or edition = ?) " +
+                    "and (? is not null or ? is not null or ? != 0  or ? != 0 or ? != 0) ";
+            PreparedStatement pStmt = con.prepareStatement(sql);
+            pStmt.setInt(1, getCategoryNumber(book.getCode()));
+            pStmt.setInt(2, getCategoryNumber(book.getCode()));
+            pStmt.setString(3, book.getName());
+            pStmt.setString(4, book.getName());
+            pStmt.setString(5, book.getAuthor());
+            pStmt.setString(6, book.getAuthor());
+            pStmt.setFloat(7, book.getCost());
+            pStmt.setFloat(8, book.getCost());
+            pStmt.setInt(9, book.getEdition());
+            pStmt.setInt(10, book.getEdition());
+            pStmt.setString(11, book.getName());
+            pStmt.setString(12, book.getAuthor());
+            pStmt.setFloat(13, book.getCost());
+            pStmt.setInt(14, book.getEdition());
+            pStmt.setInt(15, getCategoryNumber(book.getCode()));
+            System.out.println("Rows Affected " + pStmt.executeUpdate());
+
+
+        }
+        catch(SQLException s){
+            s.printStackTrace();
+        }
 
     }
 
+    public void findCheapestBook(ArrayList<Book> books){
+        try{
+
+            String sql ="Select * from books where cost = (" +
+                    "  select min(cost) from books where cost != 0);";
+            ResultSet rst;
+            PreparedStatement pStmt = con.prepareStatement(sql);
+
+
+            rst = pStmt.executeQuery();
+            while (rst.next()) {
+                Book book = new Book();
+                book.setCode(rst.getString("code"));
+                book.setName(rst.getString("name"));
+                book.setAuthor(rst.getString("author"));
+                book.setCost(rst.getFloat("cost"));
+                book.setEdition(rst.getInt("edition"));
+                book.setCategory(bookCategories.get(rst.getInt("category") - 1));
+                books.add(book);
+            }
+        }
+        catch(SQLException s){
+            s.printStackTrace();
+        }
+    }
+    public void findMostCostlyBook(ArrayList<Book> books){
+        try{
+
+            String sql ="Select * from books where cost = (" +
+                    "  select max(cost) from books where cost != 0);";
+            ResultSet rst;
+            PreparedStatement pStmt = con.prepareStatement(sql);
+
+
+            rst = pStmt.executeQuery();
+            while (rst.next()) {
+                Book book = new Book();
+                book.setCode(rst.getString("code"));
+                book.setName(rst.getString("name"));
+                book.setAuthor(rst.getString("author"));
+                book.setCost(rst.getFloat("cost"));
+                book.setEdition(rst.getInt("edition"));
+                book.setCategory(bookCategories.get(rst.getInt("category") - 1));
+                books.add(book);
+            }
+        }
+        catch(SQLException s){
+            s.printStackTrace();
+        }
+    }
+
     public void findBook(BufferedReader buff, ArrayList<Book> books) {
+        System.out.println("Enter the details of book/books, you want to find:- ");
         Book book = bookDialog(buff, false);
         ResultSet rst;
         try{
 
             String sql ="Select * from books " +
                     "where " +
-                    "(? = 0 and ((name=?) or" +
-                    " (? is null and (author = ? or (? is null and ((? != 0 and  cost = ?) or " +
-                    " (? = 0 and ((? != 0 and edition = ?) or (? = 0)))))))) or (category = ? and ((name=?) or" +
-                    " (? is null and (author = ? or (? is null and ((? != 0 and  cost = ?) or (? = 0 and " +
-                    " (? != 0 and edition = ?) or (? = 0)))))))))";
+                    "(? = 0 or category = ?) and " +
+                    "(? is null or name = ?) and " +
+                    "(? is null or author = ? ) and " +
+                    "(? = 0 or cost = ?) and " +
+                    "(? = 0 or edition = ?)";
             PreparedStatement pStmt = con.prepareStatement(sql);
             pStmt.setInt(1, getCategoryNumber(book.getCode()));
-            pStmt.setString(2, book.getName());
+            pStmt.setInt(2, getCategoryNumber(book.getCode()));
             pStmt.setString(3, book.getName());
-            pStmt.setString(4, book.getAuthor());
+            pStmt.setString(4, book.getName());
             pStmt.setString(5, book.getAuthor());
-            pStmt.setFloat(6, book.getCost());
+            pStmt.setString(6, book.getAuthor());
             pStmt.setFloat(7, book.getCost());
             pStmt.setFloat(8, book.getCost());
             pStmt.setInt(9, book.getEdition());
             pStmt.setInt(10, book.getEdition());
-            pStmt.setInt(11, book.getEdition());
-            pStmt.setInt(12, getCategoryNumber(book.getCode()));
-            pStmt.setString(13, book.getName());
-            pStmt.setString(14, book.getName());
-            pStmt.setString(15, book.getAuthor());
-            pStmt.setString(16, book.getAuthor());
-            pStmt.setFloat(17, book.getCost());
-            pStmt.setFloat(18, book.getCost());
-            pStmt.setFloat(19, book.getCost());
-            pStmt.setInt(20, book.getEdition());
-            pStmt.setInt(21, book.getEdition());
-            pStmt.setInt(22, book.getEdition());
-
-
 
             rst = pStmt.executeQuery();
             while (rst.next()) {
-
-//                System.out.println(rst.getString("name"));
+                book = new Book();
                 book.setCode(rst.getString("code"));
                 book.setName(rst.getString("name"));
                 book.setAuthor(rst.getString("author"));
