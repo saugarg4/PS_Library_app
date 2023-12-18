@@ -69,6 +69,21 @@ public class Main implements Runnable{
         }
     }
 
+    public void getBooksInCostRange(){
+        books.clear();
+        stk.findBooksInGivenCostRange(buff, books);
+        if(books.size() == 0){
+            System.out.println("Library is empty or book cost is unknown");
+        }
+        else{
+            System.out.println("Books in a given cost range are:-");
+            for (Book book : books) {
+                stk.getBookDetails(book);
+                System.out.println();
+            }
+        }
+    }
+
     public static void main(String[] args) {
         Main obj = new Main();
         Thread t = new Thread(obj);
@@ -79,7 +94,16 @@ public class Main implements Runnable{
     public void run(){
         System.out.println("Welcome to Library System");
         while(isUserContinue){
-            System.out.println("Please select the actions you want to perform\n1. Add book\n2. Update Book\n3. Remove Book\n4. Find book \n5. Find cheapest books\n6. Find most costly books\n7. Quit");
+            System.out.println("Please select the actions you want to perform\n" +
+                    "1. Add book\n" +
+                    "2. Update Book\n" +
+                    "3. Remove Book\n" +
+                    "4. Find book \n" +
+                    "5. Find cheapest books\n" +
+                    "6. Find most costly books\n" +
+                    "7. Find books in a given cost range\n" +
+                    "8. Remove 2 or more years old books\n" +
+                    "9. Quit");
             try {
                 do {
                     selectedOperation = Integer.parseInt(buff.readLine());
@@ -105,6 +129,12 @@ public class Main implements Runnable{
                         getMostCostlyBooks();
                         break;
                     case 7:
+                        getBooksInCostRange();
+                        break;
+                    case 8:
+                        stk.remove2YrsOrMoreOldBooks();
+                        break;
+                    case 9:
                         isUserContinue = false;
                         System.out.println("Quiting...");
                 }

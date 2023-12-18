@@ -11,4 +11,6 @@ public interface Stock {
     public void getBookDetails(Book book);
     public void findCheapestBook(ArrayList<Book> books);
     public void findMostCostlyBook(ArrayList<Book> books);
+    public void findBooksInGivenCostRange(BufferedReader buff,ArrayList<Book> books);
+    public void remove2YrsOrMoreOldBooks();
 }
